@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import MapView from './components/MapView'
 import CityPopup from './components/CityPopup'
+import Sidebar from './components/Sidebar'
 import cities from './data/cities.json'
 import { useCityRecords } from './hooks/useCityRecords'
 
@@ -25,6 +26,9 @@ export default function App() {
     setSelectedCityId(null)
   }
 
+  const visitedCities = Object.keys(records).filter(cityId => records[cityId]?.visited)
+  const citiesMap = Object.fromEntries(cities.map(c => [c.id, c]))
+
   const selectedCity = selectedCityId
     ? cities.find(c => c.id === selectedCityId)
     : null
@@ -33,10 +37,10 @@ export default function App() {
     : null
 
   return (
-    <div style={{ height: '100vh', width: '100vw' }}>
+    <div style={{ height: '100vh', width: '100vw', display: 'flex' }}>
       {isLoading ? (
         <div style={{
-          height: '100%',
+          flex: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -46,21 +50,31 @@ export default function App() {
           <h1>加载中...</h1>
         </div>
       ) : (
-        <MapView
-          cities={cities}
-          records={records}
-          onCityClick={handleCityClick}
-        >
-          {selectedCity && (
-            <CityPopup
-              city={selectedCity}
-              record={selectedRecord}
-              onMarkVisited={handleMarkVisited}
-              onOpenDetail={handleOpenDetail}
-              onClose={handleClosePopup}
-            />
-          )}
-        </MapView>
+        <>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <MapView
+              cities={cities}
+              records={records}
+              onCityClick={handleCityClick}
+            >
+              {selectedCity && (
+                <CityPopup
+                  city={selectedCity}
+                  record={selectedRecord}
+                  onMarkVisited={handleMarkVisited}
+                  onOpenDetail={handleOpenDetail}
+                  onClose={handleClosePopup}
+                />
+              )}
+            </MapView>
+          </div>
+          <Sidebar
+            visitedCities={visitedCities}
+            citiesMap={citiesMap}
+            records={records}
+            onCityClick={handleCityClick}
+          />
+        </>
       )}
     </div>
   )
