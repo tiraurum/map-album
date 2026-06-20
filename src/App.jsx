@@ -5,7 +5,8 @@ import MapView from './components/MapView'
 import CityPopup from './components/CityPopup'
 import Sidebar from './components/Sidebar'
 import DetailPanel from './components/DetailPanel'
-import RouteLines from './components/RouteLines'
+
+import StatisticsPanel from './components/StatisticsPanel'
 
 const citiesMap = Object.fromEntries(cities.map(c => [c.id, c]))
 
@@ -100,12 +101,6 @@ export default function App() {
         <span style={{ color: '#e94560', fontWeight: 'bold', fontSize: '16px' }}>
           🌏 我的旅行地图
         </span>
-        <div style={{ display: 'flex', gap: '20px', color: '#aaa', fontSize: '13px' }}>
-          <span>已探索 <strong style={{ color: '#e94560' }}>{visitedIds.length}</strong> 地</span>
-          <span>照片 <strong style={{ color: '#f5c518' }}>
-            {Object.values(records).reduce((sum, r) => sum + (r.photos?.length || 0), 0)}
-          </strong> 张</span>
-        </div>
       </div>
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
@@ -124,7 +119,6 @@ export default function App() {
                 onClose={() => setSelectedRegion(null)}
               />
             )}
-            <RouteLines visitedCities={visitedIds} citiesMap={citiesMap} />
           </MapView>
         </div>
 
@@ -144,6 +138,8 @@ export default function App() {
           onClose={handleCloseDetail}
         />
       )}
+
+      <StatisticsPanel records={records} />
     </div>
   )
 }
