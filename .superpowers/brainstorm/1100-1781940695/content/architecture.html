@@ -1,0 +1,110 @@
+<h2>完整架构设计</h2>
+<p class="subtitle">技术栈、组件树、数据模型、交互流程</p>
+
+<div class="section">
+  <h3>技术栈</h3>
+  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+    <tr><td style="padding: 6px 8px; border-bottom: 1px solid #333;"><strong>框架</strong></td><td style="padding: 6px 8px; border-bottom: 1px solid #333;">React 18 + Vite</td></tr>
+    <tr><td style="padding: 6px 8px; border-bottom: 1px solid #333;"><strong>地图</strong></td><td style="padding: 6px 8px; border-bottom: 1px solid #333;">Leaflet + react-leaflet</td></tr>
+    <tr><td style="padding: 6px 8px; border-bottom: 1px solid #333;"><strong>地图瓦片</strong></td><td style="padding: 6px 8px; border-bottom: 1px solid #333;">CartoDB Dark Matter（暗色风格）</td></tr>
+    <tr><td style="padding: 6px 8px; border-bottom: 1px solid #333;"><strong>存储</strong></td><td style="padding: 6px 8px; border-bottom: 1px solid #333;">IndexedDB (Dexie.js) 存照片+数据</td></tr>
+    <tr><td style="padding: 6px 8px; border-bottom: 1px solid #333;"><strong>样式</strong></td><td style="padding: 6px 8px; border-bottom: 1px solid #333;">CSS Modules / 内联暗色主题</td></tr>
+    <tr><td style="padding: 6px 8px; border-bottom: 1px solid #333;"><strong>城市数据</strong></td><td style="padding: 6px 8px; border-bottom: 1px solid #333;">~300地级市坐标 JSON（内嵌）</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>组件树</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="padding: 16px; font-size: 13px;">
+      <pre style="margin: 0; color: #ccc;">
+App
+├── TopBar              ← 标题 + "已探索 X/300 城" 统计
+├── MapView             ← 中国地图区域 (Leaflet)
+│   ├── TileLayer       ← 暗色地图瓦片
+│   ├── CityMarkers     ← 所有城市标记点
+│   │   ├── VisitedMarker   ← 去过城市 (红色发光)
+│   │   └── UnvisitedMarker ← 未去过 (灰色小点)
+│   ├── RouteLines      ← 去过城市之间的连线
+│   └── CityPopup       ← 点击城市弹出的信息浮窗
+├── Sidebar             ← 右侧边栏: 去过城市列表
+│   └── CityCard[]      ← 每个去过城市 (缩略图+名称+统计)
+└── DetailPanel         ← 底部/弹窗: 城市详情/编辑
+    ├── PhotoGrid       ← 照片墙 (上传/展示)
+    └── DescriptionEditor ← 文字描述编辑
+      </pre>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>数据模型</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="padding: 16px; font-size: 13px;">
+      <pre style="margin: 0; color: #ccc;">
+// 城市数据 (内嵌 JSON)
+City {
+  id: number           // 城市编码
+  name: string         // 城市名
+  province: string     // 所属省份
+  lat: number          // 纬度
+  lng: number          // 经度
+}
+
+// 用户存储数据 (IndexedDB)
+CityRecord {
+  cityId: number       // 关联城市 ID
+  visited: boolean     // 是否去过
+  photos: Photo[]      // 照片列表 (base64)
+  description: string  // 文字描述
+  visitDate: string    // 到访时间
+  createdAt: string    // 创建时间
+  updatedAt: string    // 更新时间
+}
+
+Photo {
+  id: string           // 唯一 ID
+  dataUrl: string      // base64 图片数据
+  caption: string      // 图片说明 (可选)
+  createdAt: string    // 上传时间
+}
+      </pre>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>交互流程</h3>
+  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+    <tr style="background: #16213e;">
+      <th style="padding: 8px; text-align: left; border-bottom: 1px solid #333;">操作</th>
+      <th style="padding: 8px; text-align: left; border-bottom: 1px solid #333;">行为</th>
+    </tr>
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">页面加载</td>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">加载 IndexedDB 数据 → 合并城市标记 → 渲染地图</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">点击未去过城市</td>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">弹窗显示城市名 + "标记为去过" 按钮</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">标记为去过</td>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">→ 保存到 IndexedDB → 标记变红色发光 → 侧边栏新增</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">点击去过城市</td>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">显示详情面板（照片+描述），可编辑</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">上传照片</td>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">文件选择 → 压缩 → base64 → IndexedDB → 更新显示</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">编辑描述</td>
+      <td style="padding: 8px; border-bottom: 1px solid #222;">保存到 IndexedDB → 下次加载自动恢复</td>
+    </tr>
+  </table>
+</div>
+
+<p style="margin-top: 24px;">以上架构设计你觉得合理吗？有需要调整的地方吗？</p>
