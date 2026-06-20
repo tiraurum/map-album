@@ -54,7 +54,7 @@ npm run preview
 
 ## 数据来源
 
-- 行政区划边界数据来源于公开的 GeoJSON 数据集
+- 行政区划边界数据来源于[天地图](https://www.tianditu.gov.cn/)（国家地理信息公共服务平台）
 - 城市坐标数据基于公开行政区划编码整理
 - 地图瓦片由 [OpenStreetMap](https://www.openstreetmap.org/) 提供（需要联网加载）
 
