@@ -5,6 +5,7 @@ import MapView from './components/MapView'
 import CityPopup from './components/CityPopup'
 import Sidebar from './components/Sidebar'
 import DetailPanel from './components/DetailPanel'
+import RouteLines from './components/RouteLines'
 
 const citiesMap = Object.fromEntries(cities.map(c => [c.id, c]))
 const visitedIds = (records) => Object.values(records)
@@ -94,6 +95,7 @@ export default function App() {
                 onClose={() => setSelectedCityId(null)}
               />
             )}
+            <RouteLines visitedCities={visitedCities} citiesMap={citiesMap} />
           </MapView>
         </div>
 
