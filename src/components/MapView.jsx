@@ -1,5 +1,6 @@
-import { MapContainer, TileLayer } from 'react-leaflet'
+import { MapContainer } from 'react-leaflet'
 import CityMarkers from './CityMarkers'
+import AdminBoundaries from './AdminBoundaries'
 
 const CHINA_CENTER = [35.86, 104.19]
 const CHINA_ZOOM = 4
@@ -14,10 +15,7 @@ export default function MapView({ cities, records, onCityClick, children }) {
       style={{ width: '100%', height: '100%' }}
       zoomControl={false}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      />
+      <AdminBoundaries />
       <CityMarkers
         cities={cities}
         records={records}
