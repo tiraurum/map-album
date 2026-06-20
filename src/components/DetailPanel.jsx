@@ -28,6 +28,20 @@ export default function DetailPanel({ city, record, onSave, onClose }) {
           <p style={{ color: '#888', fontSize: '12px', margin: '2px 0 0' }}>{city.province}</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => onSave(city.id, { visited: false, photos: [], description: '', visitDate: '' })}
+            style={{
+              background: 'transparent',
+              color: '#e94560',
+              border: '1px solid #e94560',
+              padding: '8px 14px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            取消标记
+          </button>
           <button onClick={handleSave} style={{ background: '#e94560', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>保存</button>
           <button onClick={onClose} style={{ background: 'transparent', color: '#888', border: '1px solid #333', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>关闭</button>
         </div>
