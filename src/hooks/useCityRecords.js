@@ -10,6 +10,9 @@ export function useCityRecords() {
       const map = {}
       allRecords.forEach(r => { map[r.cityId] = r })
       setRecords(map)
+    }).catch(err => {
+      console.warn('IndexedDB load error:', err)
+    }).finally(() => {
       setIsLoading(false)
     })
   }, [])

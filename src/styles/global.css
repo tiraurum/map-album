@@ -37,6 +37,11 @@ body {
   color: #666 !important;
 }
 
+/* Smooth hover transition for GeoJSON polygons */
+.leaflet-overlay-pane path {
+  transition: all 0.2s ease-out;
+}
+
 .region-label {
   background: none !important;
   border: none !important;

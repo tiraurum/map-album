@@ -33,14 +33,18 @@ export default function Sidebar({ visitedCities, citiesMap, records, onCityClick
             点击地图上的城市开始吧
           </div>
         ) : (
-          visitedCities.map(cityId => (
-            <CityCard
-              key={cityId}
-              city={citiesMap[cityId]}
-              record={records[cityId]}
-              onClick={onCityClick}
-            />
-          ))
+          visitedCities.map(cityId => {
+            const city = citiesMap[cityId]
+            const record = records[cityId]
+            return (
+              <CityCard
+                key={cityId}
+                city={city || { id: cityId, name: record?.regionName || cityId, province: '' }}
+                record={record || null}
+                onClick={onCityClick}
+              />
+            )
+          })
         )}
       </div>
     </div>

@@ -1,11 +1,10 @@
 import { MapContainer } from 'react-leaflet'
-import CityMarkers from './CityMarkers'
 import AdminBoundaries from './AdminBoundaries'
 
 const CHINA_CENTER = [35.86, 104.19]
 const CHINA_ZOOM = 4
 
-export default function MapView({ cities, records, onCityClick, children }) {
+export default function MapView({ records, onRegionClick, children }) {
   return (
     <MapContainer
       center={CHINA_CENTER}
@@ -15,12 +14,7 @@ export default function MapView({ cities, records, onCityClick, children }) {
       style={{ width: '100%', height: '100%' }}
       zoomControl={false}
     >
-      <AdminBoundaries />
-      <CityMarkers
-        cities={cities}
-        records={records}
-        onCityClick={onCityClick}
-      />
+      <AdminBoundaries records={records} onRegionClick={onRegionClick} />
       {children}
     </MapContainer>
   )
