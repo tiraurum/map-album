@@ -10,13 +10,13 @@ export default function MapView({ cities, records, onCityClick, children }) {
       center={CHINA_CENTER}
       zoom={CHINA_ZOOM}
       minZoom={3}
-      maxZoom={8}
+      maxZoom={10}
       style={{ width: '100%', height: '100%' }}
       zoomControl={false}
     >
       <TileLayer
-        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <CityMarkers
         cities={cities}

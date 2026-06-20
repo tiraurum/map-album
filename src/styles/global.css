@@ -21,6 +21,11 @@ body {
   background: #1a1a2e !important;
 }
 
+/* OSM tiles → dark theme via CSS filter */
+.leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 .leaflet-popup-content-wrapper {
   background: #16213e !important;
   color: #e0e0e0 !important;
