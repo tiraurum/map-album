@@ -1,80 +1,117 @@
-import React, { useState } from 'react'
+import { useState, useCallback } from 'react'
+import cities from './data/cities.json'
+import { useCityRecords } from './hooks/useCityRecords'
 import MapView from './components/MapView'
 import CityPopup from './components/CityPopup'
 import Sidebar from './components/Sidebar'
-import cities from './data/cities.json'
-import { useCityRecords } from './hooks/useCityRecords'
+import DetailPanel from './components/DetailPanel'
+
+const citiesMap = Object.fromEntries(cities.map(c => [c.id, c]))
+const visitedIds = (records) => Object.values(records)
+  .filter(r => r.visited)
+  .map(r => r.cityId)
 
 export default function App() {
   const { records, getRecord, saveRecord, isLoading } = useCityRecords()
   const [selectedCityId, setSelectedCityId] = useState(null)
+  const [detailCityId, setDetailCityId] = useState(null)
 
-  const handleCityClick = (cityId) => {
-    setSelectedCityId(cityId)
-  }
+  const visitedCities = visitedIds(records)
 
-  const handleMarkVisited = async (cityId) => {
+  const handleCityClick = useCallback((cityId) => {
+    setSelectedCityId(prev => prev === cityId ? null : cityId)
+  }, [])
+
+  const handleMarkVisited = useCallback(async (cityId) => {
     await saveRecord(cityId, { visited: true })
-  }
-
-  const handleOpenDetail = (cityId) => {
-    // Task 5 will implement city detail view
-    console.log('Open detail view for:', cityId)
-  }
-
-  const handleClosePopup = () => {
     setSelectedCityId(null)
+  }, [saveRecord])
+
+  const handleOpenDetail = useCallback((cityId) => {
+    setDetailCityId(cityId)
+    setSelectedCityId(null)
+  }, [])
+
+  const handleSave = useCallback(async (cityId, data) => {
+    await saveRecord(cityId, data)
+  }, [saveRecord])
+
+  const handleCloseDetail = useCallback(() => {
+    setDetailCityId(null)
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#1a1a2e',
+        color: '#888',
+      }}>
+        加载中...
+      </div>
+    )
   }
-
-  const visitedCities = Object.keys(records).filter(cityId => records[cityId]?.visited)
-  const citiesMap = Object.fromEntries(cities.map(c => [c.id, c]))
-
-  const selectedCity = selectedCityId
-    ? cities.find(c => c.id === selectedCityId)
-    : null
-  const selectedRecord = selectedCityId
-    ? getRecord(selectedCityId)
-    : null
 
   return (
-    <div style={{ height: '100vh', width: '100vw', display: 'flex' }}>
-      {isLoading ? (
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#1a1a2e',
-          color: '#e0e0e0',
-        }}>
-          <h1>加载中...</h1>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{
+        background: '#16213e',
+        padding: '10px 20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid #0f3460',
+        flexShrink: 0,
+      }}>
+        <span style={{ color: '#e94560', fontWeight: 'bold', fontSize: '16px' }}>
+          🌏 我的旅行地图
+        </span>
+        <div style={{ display: 'flex', gap: '20px', color: '#aaa', fontSize: '13px' }}>
+          <span>已探索 <strong style={{ color: '#e94560' }}>{visitedCities.length}</strong>/{cities.length} 城</span>
+          <span>照片 <strong style={{ color: '#f5c518' }}>
+            {Object.values(records).reduce((sum, r) => sum + (r.photos?.length || 0), 0)}
+          </strong> 张</span>
         </div>
-      ) : (
-        <>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <MapView
-              cities={cities}
-              records={records}
-              onCityClick={handleCityClick}
-            >
-              {selectedCity && (
-                <CityPopup
-                  city={selectedCity}
-                  record={selectedRecord}
-                  onMarkVisited={handleMarkVisited}
-                  onOpenDetail={handleOpenDetail}
-                  onClose={handleClosePopup}
-                />
-              )}
-            </MapView>
-          </div>
-          <Sidebar
-            visitedCities={visitedCities}
-            citiesMap={citiesMap}
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <div style={{ flex: 1, position: 'relative' }}>
+          <MapView
+            cities={cities}
             records={records}
             onCityClick={handleCityClick}
-          />
-        </>
+          >
+            {selectedCityId && (
+              <CityPopup
+                key={selectedCityId}
+                city={citiesMap[selectedCityId]}
+                record={getRecord(selectedCityId)}
+                onMarkVisited={handleMarkVisited}
+                onOpenDetail={handleOpenDetail}
+                onClose={() => setSelectedCityId(null)}
+              />
+            )}
+          </MapView>
+        </div>
+
+        <Sidebar
+          visitedCities={visitedCities}
+          citiesMap={citiesMap}
+          records={records}
+          onCityClick={handleOpenDetail}
+        />
+      </div>
+
+      {detailCityId && (
+        <DetailPanel
+          city={citiesMap[detailCityId]}
+          record={getRecord(detailCityId)}
+          onSave={handleSave}
+          onClose={handleCloseDetail}
+        />
       )}
     </div>
   )
