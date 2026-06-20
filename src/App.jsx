@@ -1,14 +1,36 @@
-import React from 'react'
+import React, { useState } from 'react'
 import MapView from './components/MapView'
+import CityPopup from './components/CityPopup'
 import cities from './data/cities.json'
 import { useCityRecords } from './hooks/useCityRecords'
 
 export default function App() {
-  const { records, isLoading } = useCityRecords()
+  const { records, getRecord, saveRecord, isLoading } = useCityRecords()
+  const [selectedCityId, setSelectedCityId] = useState(null)
 
   const handleCityClick = (cityId) => {
-    console.log('City clicked:', cityId)
+    setSelectedCityId(cityId)
   }
+
+  const handleMarkVisited = async (cityId) => {
+    await saveRecord(cityId, { visited: true })
+  }
+
+  const handleOpenDetail = (cityId) => {
+    // Task 5 will implement city detail view
+    console.log('Open detail view for:', cityId)
+  }
+
+  const handleClosePopup = () => {
+    setSelectedCityId(null)
+  }
+
+  const selectedCity = selectedCityId
+    ? cities.find(c => c.id === selectedCityId)
+    : null
+  const selectedRecord = selectedCityId
+    ? getRecord(selectedCityId)
+    : null
 
   return (
     <div style={{ height: '100vh', width: '100vw' }}>
@@ -28,7 +50,17 @@ export default function App() {
           cities={cities}
           records={records}
           onCityClick={handleCityClick}
-        />
+        >
+          {selectedCity && (
+            <CityPopup
+              city={selectedCity}
+              record={selectedRecord}
+              onMarkVisited={handleMarkVisited}
+              onOpenDetail={handleOpenDetail}
+              onClose={handleClosePopup}
+            />
+          )}
+        </MapView>
       )}
     </div>
   )
