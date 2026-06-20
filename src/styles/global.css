@@ -1,0 +1,53 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+  background: #1a1a2e;
+  color: #e0e0e0;
+  overflow: hidden;
+}
+
+/* Leaflet overrides for dark theme */
+.leaflet-container {
+  background: #1a1a2e !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #16213e !important;
+  color: #e0e0e0 !important;
+  border-radius: 8px !important;
+  border: 1px solid #0f3460 !important;
+}
+
+.leaflet-popup-tip {
+  background: #16213e !important;
+  border: 1px solid #0f3460 !important;
+}
+
+.leaflet-popup-close-button {
+  color: #666 !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
