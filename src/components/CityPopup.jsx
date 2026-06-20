@@ -4,7 +4,7 @@ export default function CityPopup({ city, record, onMarkVisited, onOpenDetail, o
   const visited = record?.visited
 
   return (
-    <Popup position={[city.lat, city.lng]}>
+    <Popup position={[city.lat, city.lng]} onClose={onClose}>
       <div style={{
         fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
         minWidth: '160px',
