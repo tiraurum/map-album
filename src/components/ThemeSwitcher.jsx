@@ -84,11 +84,9 @@ export default function ThemeSwitcher() {
                     <span style={{
                       width: '14px', height: '14px',
                       borderRadius: '50%',
-                      background: t.id === 'default' ? '#1a1a2e' :
-                                   t.id === 'bright' ? '#4f46e5' :
-                                   t.id === 'warm' ? '#d97706' : '#ffffff',
-                      border: t.id === 'white' ? '2px solid #18181b' : '2px solid transparent',
-                      boxShadow: t.id === 'white' ? '0 1px 3px rgba(0,0,0,0.15)' : 'none',
+                      background: t.geoBorder || t.primary,
+                      border: '2px solid ' + (t.geoBorderVisited || t.primary),
+                      boxShadow: '0 0 0 1px rgba(0,0,0,0.08)',
                       flexShrink: 0,
                     }} />
                     {t.name}
