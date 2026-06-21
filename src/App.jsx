@@ -13,6 +13,8 @@ import StatisticsPanel from './components/StatisticsPanel'
 import ThemeSwitcher from './components/ThemeSwitcher'
 import AchievementToast from './components/AchievementToast'
 import AchievementPanel from './components/AchievementPanel'
+import PhotoDropBox from './components/PhotoDropBox'
+import RoutePlayback from './components/RoutePlayback'
 
 const citiesMap = Object.fromEntries(cities.map(c => [c.id, c]))
 
@@ -34,6 +36,7 @@ function AppContent() {
   const [filterYear, setFilterYear] = useState('')
   const [sortOrder, setSortOrder] = useState('default')
   const [showAchievements, setShowAchievements] = useState(false)
+  const [playingRoute, setPlayingRoute] = useState(null)
   const regionMeta = useRef({}) // code -> { name, level }
 
   // All cities with any status (visited / wanna-go / planned)
@@ -84,6 +87,33 @@ function AppContent() {
   const handleCloseDetail = useCallback(() => {
     setDetailRegionId(null)
   }, [])
+
+  // Handle a photo from PhotoDropBox: add to city record + auto-mark city as visited
+  const handlePhotoProcessed = useCallback(async (photo) => {
+    if (photo.location?.cityId) {
+      const existing = getRecord(photo.location.cityId) || {}
+      const photoEntry = { id: photo.id, dataUrl: photo.dataUrl, caption: photo.fileName, createdAt: photo.createdAt }
+      const photos = [...(existing.photos || []), photoEntry]
+      await saveRecord(photo.location.cityId, {
+        photos,
+        visited: true,
+        status: 'visited',
+        regionName: photo.location.name,
+      })
+    }
+  }, [saveRecord, getRecord])
+
+  // Handle manually assigning photos to a city (batch, receives array of photoEntries)
+  const handleAssignCity = useCallback(async (cityId, photoEntries) => {
+    const existing = getRecord(cityId) || {}
+    const photos = [...(existing.photos || []), ...photoEntries]
+    await saveRecord(cityId, {
+      photos,
+      visited: true,
+      status: 'visited',
+      regionName: existing.regionName || String(cityId),
+    })
+  }, [saveRecord, getRecord])
 
   // Build city-like object for the popup from selectedRegion
   const popupCity = useMemo(() => {
@@ -153,7 +183,10 @@ function AppContent() {
                 onClose={() => setSelectedRegion(null)}
               />
             )}
-            <RouteLines routes={routes} citiesMap={citiesMap} />
+            <RouteLines routes={routes} citiesMap={citiesMap} playingRouteId={playingRoute?.id} />
+            {playingRoute && (
+              <RoutePlayback route={playingRoute} citiesMap={citiesMap} onClose={() => setPlayingRoute(null)} />
+            )}
           </MapView>
 
           {/* Bottom-left button group */}
@@ -203,6 +236,20 @@ function AppContent() {
 
             <AchievementToast queue={toastQueue} onDismiss={dismissToast} />
           </div>
+
+          {/* Bottom-right PhotoDropBox */}
+          <div style={{
+            position: 'absolute',
+            bottom: '44px',
+            right: '12px',
+            zIndex: 1000,
+          }}>
+            <PhotoDropBox
+              cities={cities}
+              onPhotoProcessed={handlePhotoProcessed}
+              onAssignCity={handleAssignCity}
+            />
+          </div>
         </div>
 
         <Sidebar
@@ -218,6 +265,7 @@ function AppContent() {
           routes={routes}
           onCreateRoute={createRoute}
           onDeleteRoute={deleteRoute}
+          onPlayRoute={setPlayingRoute}
         />
       </div>
 

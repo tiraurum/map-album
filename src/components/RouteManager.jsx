@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useTheme } from '../context/ThemeContext'
 
-export default function RouteManager({ routes, records, citiesMap, onCreateRoute, onDeleteRoute }) {
+export default function RouteManager({ routes, records, citiesMap, onCreateRoute, onDeleteRoute, onPlayRoute }) {
   const { theme } = useTheme()
   const [expanded, setExpanded] = useState(false)
   const [newName, setNewName] = useState('')
@@ -85,19 +85,34 @@ export default function RouteManager({ routes, records, citiesMap, onCreateRoute
                     ({route.cityIds.length}站)
                   </span>
                 </span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onDeleteRoute(route.id) }}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: theme.primary,
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    padding: '2px 4px',
-                  }}
-                >
-                  ✕
-                </button>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onPlayRoute(route) }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: theme.primary,
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      padding: '2px 4px',
+                    }}
+                  >
+                    ▶
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDeleteRoute(route.id) }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: theme.primary,
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      padding: '2px 4px',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             ))}
           </div>

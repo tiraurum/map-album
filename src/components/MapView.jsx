@@ -7,6 +7,7 @@ const CHINA_CENTER = [35.86, 104.19]
 const CHINA_ZOOM = 4
 
 export default function MapView({ records, onRegionClick, children }) {
+  const [map, setMap] = useState(null)
   const [visibleLayers, setVisibleLayers] = useState({
     province: true,
     city: false,
@@ -26,6 +27,7 @@ export default function MapView({ records, onRegionClick, children }) {
       style={{ width: '100%', height: '100%' }}
       scrollWheelZoom={true}
       zoomControl={false}
+      whenCreated={setMap}
     >
       <AdminBoundaries
         records={records}

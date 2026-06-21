@@ -21,4 +21,11 @@ db.version(3).stores({
   })
 })
 
+// v4: photos store for PhotoDropBox
+db.version(4).stores({
+  cityRecords: 'cityId, status, updatedAt',
+  routes: 'id, name, createdAt',
+  photos: 'id, cityId, dateTimeOriginal, createdAt',
+})
+
 export default db

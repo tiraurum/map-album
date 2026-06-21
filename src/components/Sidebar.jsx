@@ -9,7 +9,7 @@ export default function Sidebar({
   visitedCities, citiesMap, records,
   onCityClick, onImportDone,
   filterYear, sortOrder, onFilterYearChange, onSortChange,
-  routes, onCreateRoute, onDeleteRoute,
+  routes, onCreateRoute, onDeleteRoute, onPlayRoute,
 }) {
   const { theme } = useTheme()
 
@@ -136,6 +136,7 @@ export default function Sidebar({
             citiesMap={citiesMap}
             onCreateRoute={onCreateRoute}
             onDeleteRoute={onDeleteRoute}
+            onPlayRoute={onPlayRoute}
           />
           <DataBackup onImportDone={onImportDone} />
         </>
