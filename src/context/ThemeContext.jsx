@@ -6,8 +6,6 @@ const THEMES = {
   default: {
     id: 'default',
     name: '默认暗色',
-    mapTile: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    mapBg: '#1a1a2e',
     bg: '#1a1a2e',
     surface: '#16213e',
     surfaceAlt: '#0f1a2f',
@@ -39,8 +37,6 @@ const THEMES = {
   bright: {
     id: 'bright',
     name: '明亮系',
-    mapTile: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    mapBg: '#01847F',
     bg: '#01847F',
     surface: '#019c96',
     surfaceAlt: '#017872',
@@ -70,8 +66,6 @@ const THEMES = {
   warm: {
     id: 'warm',
     name: '暖色系',
-    mapTile: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    mapBg: '#f5efe6',
     bg: '#faf6f0',
     surface: '#fffaf3',
     surfaceAlt: '#fdf6ec',
@@ -103,8 +97,6 @@ const THEMES = {
   white: {
     id: 'white',
     name: '白色极简',
-    mapTile: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    mapBg: '#f0f0f0',
     bg: '#ffffff',
     surface: '#ffffff',
     surfaceAlt: '#fafafa',
@@ -136,8 +128,6 @@ const THEMES = {
   orange: {
     id: 'orange',
     name: '天蓝',
-    mapTile: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    mapBg: '#1E3A5F',
     bg: '#1E3A5F',
     surface: '#2a4d73',
     surfaceAlt: '#1a3252',
@@ -210,7 +200,6 @@ export function ThemeProvider({ children }) {
     const el = rootRef.current
     if (!el) return
     const t = value.theme
-    el.style.setProperty('--map-bg', t.mapBg)
     el.style.setProperty('--popup-bg', t.surface)
     el.style.setProperty('--popup-text', t.text)
     el.style.setProperty('--popup-border', t.border)

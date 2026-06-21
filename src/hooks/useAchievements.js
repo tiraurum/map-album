@@ -29,7 +29,7 @@ export function useAchievements(records) {
     const s = new Set()
     allAchievements.forEach(a => {
       const r = records[a.cityId]
-      if (r?.visited && r?.status === 'visited') {
+      if (r?.status === 'visited') {
         s.add(a.id)
       }
     })

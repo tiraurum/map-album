@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react'
-import { MapContainer, TileLayer } from 'react-leaflet'
-import { useTheme } from '../context/ThemeContext'
+import { MapContainer } from 'react-leaflet'
 import AdminBoundaries from './AdminBoundaries'
 import LayerControl from './LayerControl'
 
@@ -8,7 +7,6 @@ const CHINA_CENTER = [35.86, 104.19]
 const CHINA_ZOOM = 4
 
 export default function MapView({ records, onRegionClick, children }) {
-  const { theme } = useTheme()
   const [visibleLayers, setVisibleLayers] = useState({
     province: true,
     city: false,
@@ -29,11 +27,6 @@ export default function MapView({ records, onRegionClick, children }) {
       scrollWheelZoom={true}
       zoomControl={false}
     >
-      <TileLayer
-        key={theme.id}
-        url={theme.mapTile}
-        attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
-      />
       <AdminBoundaries
         records={records}
         onRegionClick={onRegionClick}

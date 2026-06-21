@@ -47,7 +47,7 @@ function TripSection({ trip, index, onUpdate, onRemove }) {
   )
 }
 
-export default function DetailPanel({ city, record, onSave, onClose, onAddTrip, onUpdateTrip, onRemoveTrip }) {
+export default function DetailPanel({ city, record, onSave, onClose, onUnmarkCity, onAddTrip, onUpdateTrip, onRemoveTrip }) {
   const status = record?.status || (record?.visited ? 'visited' : '')
   const isPlanning = status === 'wanna-go' || status === 'planned'
 
@@ -127,7 +127,7 @@ export default function DetailPanel({ city, record, onSave, onClose, onAddTrip, 
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
-              onClick={() => { onSave(city.id, { visited: false, photos: [], description: '', visitDate: '', trips: [] }); onClose() }}
+              onClick={() => { onUnmarkCity(city.id) }}
               style={btnStyle}
             >
               取消标记

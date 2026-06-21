@@ -69,6 +69,7 @@ function AppContent() {
   const handleUnmarkCity = useCallback(async (regionId) => {
     await deleteRecord(regionId)
     setSelectedRegion(null)
+    setDetailRegionId(null)
   }, [deleteRecord])
 
   const handleOpenDetail = useCallback((regionId) => {
@@ -226,6 +227,7 @@ function AppContent() {
           record={getRecord(detailCity.id)}
           onSave={handleSave}
           onClose={handleCloseDetail}
+          onUnmarkCity={handleUnmarkCity}
           onAddTrip={addTrip}
           onUpdateTrip={updateTrip}
           onRemoveTrip={removeTrip}

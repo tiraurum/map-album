@@ -11,4 +11,14 @@ db.version(2).stores({
   routes: 'id, name, createdAt',
 })
 
+// v3: migrate visited → status, adjust index
+db.version(3).stores({
+  cityRecords: 'cityId, status, updatedAt',
+  routes: 'id, name, createdAt',
+}).upgrade(async (tx) => {
+  await tx.table('cityRecords').toCollection().modify((r) => {
+    if (r.visited && !r.status) r.status = 'visited'
+  })
+})
+
 export default db

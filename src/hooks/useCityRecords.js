@@ -58,6 +58,7 @@ export function useCityRecords() {
       ...existing,
       cityId,
       visited: true,
+      status: existing?.status || 'visited',
       trips: [...trips, trip],
       updatedAt: now,
       createdAt: existing?.createdAt || now,

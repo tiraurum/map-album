@@ -134,12 +134,12 @@ export default function AdminBoundaries({ records, onRegionClick, visibleLayers 
     [zoom, visibleLayers]
   )
 
-  // ── Visited data (code → status) ──────────────────────────
+  // ── Visited data (code → status) — status is single source of truth
   const visited = useMemo(() => {
     if (!records) return new Map()
     const map = new Map()
     Object.entries(records).forEach(([k, r]) => {
-      if (r?.visited) map.set(String(k), r.status || 'visited')
+      if (r?.status) map.set(String(k), r.status)
     })
     return map
   }, [records])
@@ -227,6 +227,26 @@ export default function AdminBoundaries({ records, onRegionClick, visibleLayers 
     return { maxPhoto, maxVisit, photoCountMap, intensityMap }
   }, [records])
 
+  // ── Tooltip builder ─────────────────────────────────────
+  const buildTooltip = useCallback((code, name) => {
+    const status = refs.current.visited.get(code)
+    const heatIntensity = intensityMap?.[code]
+    if (status === 'visited') {
+      const pc = photoCountMap[code] || 0
+      const pct = Math.round((heatIntensity || 0) * 100)
+      return `${name}
+📷 ${pc}张照片 · 热度 ${pct}%`
+    }
+    if (status === 'wanna-go' || status === 'planned') {
+      const labels = { 'wanna-go': '想去', planned: '计划中' }
+      return `${name} (${labels[status]})`
+    }
+    if (heatIntensity !== undefined && heatIntensity > 0.05) {
+      return `${name} 🔥 ${Math.round(heatIntensity * 100)}%`
+    }
+    return name
+  }, [intensityMap, photoCountMap])
+
   // ── Style ───────────────────────────────────────────────
   const computeStyle = useCallback((code, level) => {
     const v = refs.current.visited
@@ -268,14 +288,18 @@ export default function AdminBoundaries({ records, onRegionClick, visibleLayers 
   const hoveredRef = useRef(null)
   const allLayers = useRef([])
 
-  // ── Re-apply styles on visited data change ──────────────
+  // ── Re-apply styles & tooltips on visited data change ──
   useEffect(() => {
     const hov = hoveredRef.current
     allLayers.current.forEach(l => {
       if (!l._map || l === hov) return
       l.setStyle(refs.current.computeStyle(l._code, l._level))
+      // Refresh tooltip content so unmark/cancel is reflected immediately
+      if (l.getTooltip() && l._name) {
+        l.setTooltipContent(buildTooltip(l._code, l._name))
+      }
     })
-  }, [records, t])
+  }, [records, t, buildTooltip])
 
   // ── Clean up on unmount ────────────────────────────
   useEffect(() => {
@@ -292,6 +316,7 @@ export default function AdminBoundaries({ records, onRegionClick, visibleLayers 
       const lv = getLevel(code) || 'county'
       layer._code = code
       layer._level = lv
+      layer._name = name
       allLayers.current.push(layer)
 
       layer.setStyle(computeStyle(code, lv))
@@ -336,7 +361,7 @@ export default function AdminBoundaries({ records, onRegionClick, visibleLayers 
 
 
     }
-  }, [map, computeStyle])
+  }, [map, computeStyle, buildTooltip])
 
   // ── Choose data based on active layer ───────────────────
   const dataMap = { province: pData, city: cData, county: coData }

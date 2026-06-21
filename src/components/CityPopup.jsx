@@ -18,7 +18,7 @@ const UPGRADE_PATHS = {
 }
 
 export default function CityPopup({ city, record, onMarkCity, onUpdateStatus, onUnmarkCity, onOpenDetail, onClose }) {
-  const status = record?.status || (record?.visited ? 'visited' : '')
+  const status = record?.status || ''
   const cfg = STATUS_CONFIG[status]
 
   const btnStyle = (color) => ({
@@ -83,6 +83,13 @@ export default function CityPopup({ city, record, onMarkCity, onUpdateStatus, on
             <button onClick={() => onOpenDetail(city.id)} style={btnStyle(cfg?.color || '#e94560')}>
               查看详情
             </button>
+
+            {/* Unmark button */}
+            {onUnmarkCity && (
+              <button onClick={() => onUnmarkCity(city.id)} style={outlineBtn('#9ca3af')}>
+                ✕ 取消标记
+              </button>
+            )}
           </div>
         )}
       </div>
