@@ -26,7 +26,7 @@ export default function App() {
 
 function AppContent() {
   const { theme, themeId } = useTheme()
-  const { records, getRecord, saveRecord, loadRecords, addTrip, updateTrip, removeTrip, isLoading } = useCityRecords()
+  const { records, getRecord, saveRecord, deleteRecord, loadRecords, addTrip, updateTrip, removeTrip, isLoading } = useCityRecords()
   const { routes, createRoute, deleteRoute } = useRoutes()
   const { unlocked, locked, toastQueue, dismissToast, unlockedCount, totalCount } = useAchievements(records)
   const [selectedRegion, setSelectedRegion] = useState(null)
@@ -67,9 +67,9 @@ function AppContent() {
   }, [saveRecord])
 
   const handleUnmarkCity = useCallback(async (regionId) => {
-    await saveRecord(regionId, { visited: false, status: null })
+    await deleteRecord(regionId)
     setSelectedRegion(null)
-  }, [saveRecord])
+  }, [deleteRecord])
 
   const handleOpenDetail = useCallback((regionId) => {
     setDetailRegionId(regionId)

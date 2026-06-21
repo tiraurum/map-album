@@ -95,5 +95,15 @@ export function useCityRecords() {
     return updated
   }, [])
 
-  return { records, getRecord, saveRecord, loadRecords, addTrip, updateTrip, removeTrip, isLoading }
+  /** Delete a city record entirely from IndexedDB. */
+  const deleteRecord = useCallback(async (cityId) => {
+    await db.cityRecords.delete(cityId)
+    setRecords(prev => {
+      const next = { ...prev }
+      delete next[cityId]
+      return next
+    })
+  }, [])
+
+  return { records, getRecord, saveRecord, deleteRecord, loadRecords, addTrip, updateTrip, removeTrip, isLoading }
 }
