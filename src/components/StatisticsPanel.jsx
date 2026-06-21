@@ -1,11 +1,8 @@
+import { useTheme } from '../context/ThemeContext'
 import { useTravelStats } from '../hooks/useTravelStats'
 
-/**
- * StatisticsPanel — a thin bottom bar that displays travel stats:
- * city count, area covered, and time span.
- * Always visible, providing a sense of achievement.
- */
 export default function StatisticsPanel({ records }) {
+  const { theme } = useTheme()
   const {
     visitedCitiesCount,
     totalCitiesCount,
@@ -20,59 +17,53 @@ export default function StatisticsPanel({ records }) {
       justifyContent: 'center',
       alignItems: 'center',
       gap: '48px',
-      background: '#0f1a2f',
-      borderTop: '1px solid #0f3460',
+      background: theme.surfaceAlt,
+      borderTop: `1px solid ${theme.border}`,
       padding: '10px 24px',
       flexShrink: 0,
       minHeight: '52px',
     }}>
-      {/* ── City count ── */}
       <StatItem
         icon="🏙️"
         label="已点亮中国"
         value={isLoading ? '—' : visitedCitiesCount}
         unit="个城市"
         sub={`/ ${totalCitiesCount}`}
+        theme={theme}
       />
-
-      {/* ── Divider ── */}
-      <Divider />
-
-      {/* ── Area ── */}
+      <Divider theme={theme} />
       <StatItem
         icon="🗺️"
         label="点亮中国约"
         value={isLoading ? '—' : totalAreaFormatted}
         unit="平方公里"
+        theme={theme}
       />
-
-      {/* ── Divider ── */}
-      <Divider />
-
-      {/* ── Time span ── */}
+      <Divider theme={theme} />
       <StatItem
         icon="⏳"
         label="历时"
         value={isLoading ? '—' : timeSpanFormatted || '不足 1 天'}
         unit=""
+        theme={theme}
       />
     </div>
   )
 }
 
-function StatItem({ icon, label, value, unit, sub }) {
+function StatItem({ icon, label, value, unit, sub, theme }) {
   return (
     <div style={{
       display: 'flex',
       alignItems: 'baseline',
       gap: '6px',
-      color: '#aaa',
+      color: theme.textSecondary,
       fontSize: '13px',
     }}>
       <span style={{ fontSize: '16px' }}>{icon}</span>
       <span>{label}</span>
       <strong style={{
-        color: '#e94560',
+        color: theme.primary,
         fontSize: '18px',
         fontWeight: '700',
         letterSpacing: '0.5px',
@@ -81,18 +72,18 @@ function StatItem({ icon, label, value, unit, sub }) {
       </strong>
       <span>{unit}</span>
       {sub && (
-        <span style={{ color: '#555', fontSize: '11px' }}>{sub}</span>
+        <span style={{ color: theme.textMuted, fontSize: '11px' }}>{sub}</span>
       )}
     </div>
   )
 }
 
-function Divider() {
+function Divider({ theme }) {
   return (
     <div style={{
       width: '1px',
       height: '24px',
-      background: '#1a2a4a',
+      background: theme.border,
     }} />
   )
 }

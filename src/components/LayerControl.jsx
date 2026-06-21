@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useMap } from 'react-leaflet'
+import { useTheme } from '../context/ThemeContext'
 
 const LEVEL_INFO = [
-  { key: 'province', label: '省界', color: '#e94560', zoomRange: '3–5' },
-  { key: 'city',     label: '市界', color: '#e94560', zoomRange: '6–7' },
-  { key: 'county',   label: '县界', color: '#e94560', zoomRange: '8' },
+  { key: 'province', label: '省界', zoomRange: '3–5' },
+  { key: 'city',     label: '市界', zoomRange: '6–7' },
+  { key: 'county',   label: '县界', zoomRange: '8' },
 ]
 
 export default function LayerControl({ layers, onChange }) {
+  const { theme: t } = useTheme()
   const map = useMap()
   const [zoom, setZoom] = useState(map.getZoom())
   const isFirst = useRef(true)
@@ -49,7 +51,7 @@ export default function LayerControl({ layers, onChange }) {
           />
           <span
             className="layer-control-swatch"
-            style={{ background: info.color, opacity: layers?.[info.key] ? 1 : 0.3 }}
+            style={{ background: t.geoBorder, opacity: layers?.[info.key] ? 1 : 0.3 }}
           />
           <span className="layer-control-label">{info.label}</span>
         </label>

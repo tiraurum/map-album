@@ -1,4 +1,15 @@
+import { useTheme } from '../context/ThemeContext'
+
+const STATUS_LABELS = {
+  'visited': { label: '已去过', color: '#e94560' },
+  'wanna-go': { label: '想去', color: '#3b82f6' },
+  'planned': { label: '计划中', color: '#10b981' },
+}
+
 export default function CityCard({ city, record, onClick }) {
+  const { theme } = useTheme()
+  const status = record?.status || (record?.visited ? 'visited' : '')
+  const cfg = STATUS_LABELS[status]
   const photoCount = record?.photos?.length || 0
   const thumbnail = record?.photos?.[0]?.dataUrl
 
@@ -6,40 +17,45 @@ export default function CityCard({ city, record, onClick }) {
     <div
       onClick={() => onClick(city.id)}
       style={{
-        background: '#1a1a2e',
+        background: theme.bg,
         borderRadius: '8px',
         padding: '10px',
         display: 'flex',
         gap: '10px',
         alignItems: 'center',
         cursor: 'pointer',
-        borderLeft: '3px solid #e94560',
+        borderLeft: cfg?.color ? `3px solid ${cfg.color}` : `3px solid ${theme.textMuted}`,
         transition: 'background 0.2s',
+        boxShadow: theme.shadow || 'none',
       }}
-      onMouseEnter={e => e.currentTarget.style.background = '#16213e'}
-      onMouseLeave={e => e.currentTarget.style.background = '#1a1a2e'}
+      onMouseEnter={e => e.currentTarget.style.background = theme.surface}
+      onMouseLeave={e => e.currentTarget.style.background = theme.bg}
     >
       <div style={{
         width: '40px',
         height: '40px',
         borderRadius: '4px',
-        background: thumbnail ? `url(${thumbnail}) center/cover` : '#333',
+        background: thumbnail ? `url(${thumbnail}) center/cover` : theme.inputBg,
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#555',
+        color: theme.textMuted,
         fontSize: '10px',
         overflow: 'hidden',
+        border: `1px solid ${theme.border}`,
       }}>
         {!thumbnail && '📷'}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '13px' }}>
+        <div style={{ color: theme.text, fontWeight: 'bold', fontSize: '13px' }}>
           {city.name}
         </div>
-        <div style={{ color: '#888', fontSize: '11px' }}>
-          {record.visitDate || '未记录时间'} · {photoCount}张照片
+        <div style={{ color: theme.textSecondary, fontSize: '11px' }}>
+          {cfg && <span style={{ color: cfg.color }}>{cfg.label}</span>}
+          {cfg && status === 'visited' && record?.visitDate && <> · {record.visitDate}</>}
+          {cfg && status === 'visited' && !record?.visitDate && <> · 未记录时间</>}
+          {cfg && status === 'visited' && <> · {photoCount}张照片</>}
         </div>
       </div>
     </div>

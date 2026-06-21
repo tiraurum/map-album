@@ -83,7 +83,7 @@ export function computeVisitedArea(visitedCodes, cityAreaMap) {
  * @returns {{ days: number, earliest: string|null, latest: string|null }}
  */
 export function computeTimeSpan(visitedRecords) {
-  if (!visitedRecords || visitedRecords.length < 2) {
+  if (!visitedRecords || visitedRecords.length < 1) {
     return { days: 0, earliest: null, latest: null }
   }
 
@@ -91,10 +91,18 @@ export function computeTimeSpan(visitedRecords) {
   let latest = -Infinity
 
   for (const r of visitedRecords) {
-    // Primary: visitDate (user-set actual travel date)
-    // Fallback: createdAt (when they first marked it)
-    const dateStr = r.visitDate || r.createdAt
-    if (dateStr) {
+    // Collect all dates: main visitDate + trips' visitDate
+    const dates = []
+    if (r.visitDate) dates.push(r.visitDate)
+    if (r.trips) {
+      r.trips.forEach(t => {
+        if (t.visitDate) dates.push(t.visitDate)
+      })
+    }
+    // Fallback: createdAt
+    if (dates.length === 0 && r.createdAt) dates.push(r.createdAt)
+
+    for (const dateStr of dates) {
       const t = new Date(dateStr).getTime()
       if (!isNaN(t)) {
         if (t < earliest) earliest = t

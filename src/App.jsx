@@ -1,22 +1,38 @@
 import { useState, useCallback, useRef, useMemo } from 'react'
 import cities from './data/cities.json'
 import { useCityRecords } from './hooks/useCityRecords'
+import { useRoutes } from './hooks/useRoutes'
+import { ThemeProvider, useTheme } from './context/ThemeContext'
 import MapView from './components/MapView'
 import CityPopup from './components/CityPopup'
 import Sidebar from './components/Sidebar'
 import DetailPanel from './components/DetailPanel'
-
+import RouteLines from './components/RouteLines'
 import StatisticsPanel from './components/StatisticsPanel'
+import ThemeSwitcher from './components/ThemeSwitcher'
 
 const citiesMap = Object.fromEntries(cities.map(c => [c.id, c]))
 
 export default function App() {
-  const { records, getRecord, saveRecord, isLoading } = useCityRecords()
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  )
+}
+
+function AppContent() {
+  const { theme, themeId } = useTheme()
+  const { records, getRecord, saveRecord, loadRecords, addTrip, updateTrip, removeTrip, isLoading } = useCityRecords()
+  const { routes, createRoute, deleteRoute } = useRoutes()
   const [selectedRegion, setSelectedRegion] = useState(null)
   const [detailRegionId, setDetailRegionId] = useState(null)
+  const [filterYear, setFilterYear] = useState('')
+  const [sortOrder, setSortOrder] = useState('default')
   const regionMeta = useRef({}) // code -> { name, level }
 
-  const visitedIds = Object.values(records).filter(r => r.visited).map(r => r.cityId)
+  // All cities with any status (visited / wanna-go / planned)
+  const markedIds = Object.values(records).filter(r => r.visited).map(r => r.cityId)
 
   function handleRegionClick(region) {
     if (!region || !region.code) return
@@ -34,11 +50,16 @@ export default function App() {
     })
   }
 
-  const handleMarkVisited = useCallback(async (regionId) => {
+  const handleMarkCity = useCallback(async (regionId, status) => {
     const name = selectedRegion?.name || String(regionId)
-    await saveRecord(regionId, { visited: true, regionName: name })
+    await saveRecord(regionId, { visited: true, status, regionName: name })
     setSelectedRegion(null)
   }, [saveRecord, selectedRegion])
+
+  const handleUpdateStatus = useCallback(async (regionId, newStatus) => {
+    await saveRecord(regionId, { status: newStatus, visited: true })
+    // Keep popup open so user sees the change
+  }, [saveRecord])
 
   const handleOpenDetail = useCallback((regionId) => {
     setDetailRegionId(regionId)
@@ -84,7 +105,7 @@ export default function App() {
     return (
       <div style={{
         height: '100vh', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', background: '#1a1a2e', color: '#888',
+        justifyContent: 'center', background: theme.bg, color: theme.textSecondary,
       }}>
         加载中...
       </div>
@@ -92,13 +113,13 @@ export default function App() {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: theme.bg }}>
       <div style={{
-        background: '#16213e', padding: '10px 20px',
+        background: theme.surface, padding: '10px 20px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        borderBottom: '1px solid #0f3460', flexShrink: 0,
+        borderBottom: `1px solid ${theme.border}`, flexShrink: 0,
       }}>
-        <span style={{ color: '#e94560', fontWeight: 'bold', fontSize: '16px' }}>
+        <span style={{ color: theme.primary, fontWeight: 'bold', fontSize: '16px' }}>
           🌏 我的旅行地图
         </span>
       </div>
@@ -114,19 +135,39 @@ export default function App() {
                 key={popupCity.id}
                 city={popupCity}
                 record={getRecord(popupCity.id)}
-                onMarkVisited={handleMarkVisited}
+                onMarkCity={handleMarkCity}
+                onUpdateStatus={handleUpdateStatus}
                 onOpenDetail={handleOpenDetail}
                 onClose={() => setSelectedRegion(null)}
               />
             )}
+            <RouteLines routes={routes} citiesMap={citiesMap} />
           </MapView>
+
+          {/* Theme switcher button — bottom-left */}
+          <div style={{
+            position: 'absolute',
+            bottom: '12px',
+            left: '12px',
+            zIndex: 1000,
+          }}>
+            <ThemeSwitcher />
+          </div>
         </div>
 
         <Sidebar
-          visitedCities={visitedIds}
+          visitedCities={markedIds}
           citiesMap={citiesMap}
           records={records}
           onCityClick={handleOpenDetail}
+          onImportDone={loadRecords}
+          filterYear={filterYear}
+          sortOrder={sortOrder}
+          onFilterYearChange={setFilterYear}
+          onSortChange={setSortOrder}
+          routes={routes}
+          onCreateRoute={createRoute}
+          onDeleteRoute={deleteRoute}
         />
       </div>
 
@@ -136,6 +177,9 @@ export default function App() {
           record={getRecord(detailCity.id)}
           onSave={handleSave}
           onClose={handleCloseDetail}
+          onAddTrip={addTrip}
+          onUpdateTrip={updateTrip}
+          onRemoveTrip={removeTrip}
         />
       )}
 

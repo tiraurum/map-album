@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { GeoJSON, useMap } from 'react-leaflet'
+import { useTheme } from '../context/ThemeContext'
 // ── Helpers ────────────────────────────────────────────────
 
 function getCode(props) {
@@ -72,34 +73,40 @@ function resolveLayer(zoom, enabled) {
   return null
 }
 
-// ── Style constants ────────────────────────────────────────
+// ── Style constants (re-computed per render from theme) ───
 
 const LEVEL_ORDER = ['province', 'city', 'county']
 
-const STYLES = {
-  province: { color: '#e94560', weight: 2, opacity: 0.6, fillOpacity: 0 },
-  city:     { color: '#e94560', weight: 1.2, opacity: 0.45, fillOpacity: 0 },
-  county:   { color: '#e94560', weight: 0.6, opacity: 0.3, fillOpacity: 0 },
+function makeStyles(t) {
+  return {
+    province: { color: t.geoBorder, weight: 2, opacity: 0.6, fillOpacity: 0 },
+    city:     { color: t.geoBorder, weight: 1.2, opacity: 0.45, fillOpacity: 0 },
+    county:   { color: t.geoBorder, weight: 0.6, opacity: 0.3, fillOpacity: 0 },
+    visited:  { color: t.geoBorderVisited, weight: 2.8, opacity: 1, fillColor: t.geoFillVisited, fillOpacity: 0.35 },
+    wannaGo:  { color: t.wannaGoBorder, weight: 2.8, opacity: 1, fillColor: t.wannaGoFill, fillOpacity: 0.35 },
+    planned:  { color: t.plannedBorder, weight: 2.8, opacity: 1, fillColor: t.plannedFill, fillOpacity: 0.35 },
+    hover:    { weight: 4.5, opacity: 1, fillOpacity: 0.4, fillColor: t.geoHoverFill, color: t.geoHoverBorder },
+  }
 }
 
-const VISITED = {
-  color: '#ff6b81', weight: 2.8, opacity: 1,
-  fillColor: '#e94560', fillOpacity: 0.35,
+/** Get parent administrative code for hierarchical heat propagation. */
+function getParentCode(code) {
+  if (!code || code.length < 6) return null
+  if (code.endsWith('0000')) return null // province has no parent
+  if (code.endsWith('00')) return code.slice(0, 2) + '0000' // city → province
+  return code.slice(0, 4) + '00' // county → city
 }
 
-const PARENT_VISITED = {
-  color: '#e94560', weight: 1.8, opacity: 0.75,
-  fillColor: '#e94560', fillOpacity: 0.22,
-}
-
-const HOVER = {
-  weight: 4.5, opacity: 1, fillOpacity: 0.4,
-  fillColor: '#ff6b81', color: '#ff6b81',
+/** Convert hex color to RGB components string, e.g. '#e94560' → '233,69,96'. */
+function hexToRgb(hex) {
+  const v = parseInt(hex.slice(1), 16)
+  return `${(v >> 16) & 255},${(v >> 8) & 255},${v & 255}`
 }
 
 // ── Component ──────────────────────────────────────────────
 
 export default function AdminBoundaries({ records, onRegionClick, visibleLayers }) {
+  const { theme: t } = useTheme()
   const map = useMap()
 
   // ── GeoJSON data ─────────────────────────────────────────
@@ -127,23 +134,26 @@ export default function AdminBoundaries({ records, onRegionClick, visibleLayers 
     [zoom, visibleLayers]
   )
 
-  // ── Visited data ─────────────────────────────────────────
+  // ── Visited data (code → status) ──────────────────────────
   const visited = useMemo(() => {
-    if (!records) return new Set()
-    return new Set(
-      Object.entries(records).filter(([, r]) => r?.visited).map(([k]) => String(k))
-    )
+    if (!records) return new Map()
+    const map = new Map()
+    Object.entries(records).forEach(([k, r]) => {
+      if (r?.visited) map.set(String(k), r.status || 'visited')
+    })
+    return map
   }, [records])
 
   const hasChild = useCallback(code => {
     if (!code || !visited.size) return false
+    const keys = [...visited.keys()]
     if (code.endsWith('0000')) {
       const pfx = code.slice(0, 2)
-      return [...visited].some(k => k !== code && k.startsWith(pfx))
+      return keys.some(k => k !== code && k.startsWith(pfx))
     }
     if (code.endsWith('00') && !code.endsWith('0000')) {
       const pfx = code.slice(0, 4)
-      return [...visited].some(k => k !== code && k.startsWith(pfx))
+      return keys.some(k => k !== code && k.startsWith(pfx))
     }
     return false
   }, [visited])
@@ -164,29 +174,108 @@ export default function AdminBoundaries({ records, onRegionClick, visibleLayers 
     }
   }, [map])
 
-  // ── Refs ────────────────────────────────────────────────
-  const refs = useRef({ visited, hasChild, onRegionClick })
-  refs.current = { visited, hasChild, onRegionClick }
-  const hoveredRef = useRef(null)
-  const allLayers = useRef([])
+  // Theme-aware style constants (rebuilt on theme change)
+  const styles = useMemo(() => makeStyles(t), [t])
+
+  // ── Heatmap intensity (with hierarchical propagation) ──
+  const { maxPhoto, maxVisit, photoCountMap, intensityMap } = useMemo(() => {
+    let maxPhoto = 0
+    let maxVisit = 0
+    const photoCountMap = {}
+    const directMap = {}
+    if (records) {
+      Object.entries(records).forEach(([code, r]) => {
+        if (!r?.visited) return
+        const pc = r.photos?.length || 0
+        const vc = 1
+        photoCountMap[code] = pc
+        if (pc > maxPhoto) maxPhoto = pc
+        if (vc > maxVisit) maxVisit = vc
+      })
+      // Compute direct intensities
+      Object.entries(records).forEach(([code, r]) => {
+        if (!r?.visited) return
+        const pc = photoCountMap[code] || 0
+        const photoNorm = maxPhoto > 0
+          ? Math.log(pc + 1) / Math.log(maxPhoto + 1)
+          : 0
+        const visitNorm = maxVisit > 0
+          ? Math.log(1 + 1) / Math.log(maxVisit + 1)
+          : 1
+        directMap[code] = photoNorm * 0.6 + visitNorm * 0.4
+      })
+    }
+
+    // Propagate: child → parent (MAX aggregation, two hops: county→city→province)
+    const intensityMap = { ...directMap }
+    // Hop 1: any level → parent
+    Object.entries(directMap).forEach(([code, intensity]) => {
+      const parent = getParentCode(code)
+      if (parent) {
+        intensityMap[parent] = Math.max(intensityMap[parent] || 0, intensity * 0.7)
+      }
+    })
+    // Hop 2: parent → grandparent (using values from hop 1)
+    Object.keys(intensityMap).forEach(code => {
+      if (code in directMap) return // skip directly-visited (already handled above)
+      const parent = getParentCode(code)
+      if (parent) {
+        intensityMap[parent] = Math.max(intensityMap[parent] || 0, (intensityMap[code] || 0) * 0.7)
+      }
+    })
+
+    return { maxPhoto, maxVisit, photoCountMap, intensityMap }
+  }, [records])
 
   // ── Style ───────────────────────────────────────────────
   const computeStyle = useCallback((code, level) => {
     const v = refs.current.visited
     const hc = refs.current.hasChild
-    if (v.has(code)) return VISITED
-    if (hc(code)) return PARENT_VISITED
-    return STYLES[level] || STYLES.county
-  }, [])
+    const im = intensityMap
+    if (v.has(code)) {
+      const status = v.get(code)
+      if (status === 'wanna-go') return styles.wannaGo
+      if (status === 'planned') return styles.planned
+      // Heatmap: dynamic fill opacity based on intensity
+      const intensity = im[code] ?? 0.3
+      const alpha = 0.15 + intensity * 0.75
+      return {
+        color: t.geoBorderVisited,
+        weight: 2.8,
+        opacity: 1,
+        fillColor: `rgba(${hexToRgb(t.geoFillVisited)}, ${Math.min(alpha, 0.9).toFixed(2)})`,
+        fillOpacity: 1,
+      }
+    }
+    // Propagated heat: parent region with child heat, not directly visited
+    if (hc(code) || (im[code] !== undefined && im[code] > 0.05)) {
+      const intensity = im[code] ?? 0.15
+      const alpha = 0.08 + intensity * 0.4
+      return {
+        color: t.geoFillParent,
+        weight: 1.8,
+        opacity: 0.75,
+        fillColor: `rgba(${hexToRgb(t.geoFillParent)}, ${Math.min(alpha, 0.5).toFixed(2)})`,
+        fillOpacity: 1,
+      }
+    }
+    return styles[level] || styles.county
+  }, [intensityMap, t, styles])
+
+  // ── Refs ────────────────────────────────────────────────
+  const refs = useRef({ visited, hasChild, onRegionClick })
+  refs.current = { visited, hasChild, onRegionClick, computeStyle, hoverStyle: styles.hover }
+  const hoveredRef = useRef(null)
+  const allLayers = useRef([])
 
   // ── Re-apply styles on visited data change ──────────────
   useEffect(() => {
     const hov = hoveredRef.current
     allLayers.current.forEach(l => {
       if (!l._map || l === hov) return
-      l.setStyle(computeStyle(l._code, l._level))
+      l.setStyle(refs.current.computeStyle(l._code, l._level))
     })
-  }, [records, computeStyle])
+  }, [records, t])
 
   // ── Clean up on unmount ────────────────────────────
   useEffect(() => {
@@ -207,20 +296,36 @@ export default function AdminBoundaries({ records, onRegionClick, visibleLayers 
 
       layer.setStyle(computeStyle(code, lv))
 
-      // Hover tooltip
-      layer.bindTooltip(name, { sticky: true, className: 'region-label' })
+      // Enriched tooltip for visited & parent regions
+      const status = refs.current.visited.get(code)
+      const heatIntensity = intensityMap?.[code]
+      let tooltip = name
+      if (status) {
+        const pc = heatIntensity !== undefined ? (photoCountMap[code] || 0) : null
+        if (status === 'visited') {
+          const pct = Math.round((heatIntensity || 0) * 100)
+          tooltip = `${name}\n📷 ${pc}张照片 · 热度 ${pct}%`
+        } else {
+          const labels = { 'wanna-go': '想去', planned: '计划中' }
+          tooltip = `${name} (${labels[status] || status})`
+        }
+      } else if (heatIntensity !== undefined && heatIntensity > 0.05) {
+        const pct = Math.round(heatIntensity * 100)
+        tooltip = `${name} 🔥 ${pct}%`
+      }
+      layer.bindTooltip(tooltip, { sticky: true, className: 'region-label' })
 
       layer.on({
         mouseover() {
           const h = hoveredRef.current
-          if (h && h !== layer) h.setStyle(computeStyle(h._code, h._level))
-          layer.setStyle(HOVER)
+          if (h && h !== layer) h.setStyle(refs.current.computeStyle(h._code, h._level))
+          layer.setStyle(refs.current.hoverStyle)
           layer.bringToFront()
           hoveredRef.current = layer
         },
         mouseout() {
           if (hoveredRef.current !== layer) return
-          layer.setStyle(computeStyle(code, lv))
+          layer.setStyle(refs.current.computeStyle(code, lv))
           hoveredRef.current = null
         },
         click(e) {
@@ -235,7 +340,6 @@ export default function AdminBoundaries({ records, onRegionClick, visibleLayers 
 
   // ── Choose data based on active layer ───────────────────
   const dataMap = { province: pData, city: cData, county: coData }
-  const styleMap = { province: STYLES.province, city: STYLES.city, county: STYLES.county }
 
   return (
     <>
@@ -245,7 +349,7 @@ export default function AdminBoundaries({ records, onRegionClick, visibleLayers 
           <GeoJSON
             key={lv}
             data={dataMap[lv]}
-            style={styleMap[lv]}
+            style={styles[lv]}
             onEachFeature={makeOnEachFeature(lv)}
           />
         )

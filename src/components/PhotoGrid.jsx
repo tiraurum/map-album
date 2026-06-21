@@ -34,15 +34,19 @@ export default function PhotoGrid({ photos = [], onAddPhoto, onRemovePhoto }) {
   const fileInputRef = useRef(null)
 
   const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const dataUrl = await compressImage(file)
-    onAddPhoto({
-      id: Date.now().toString(),
-      dataUrl,
-      caption: '',
-      createdAt: new Date().toISOString(),
-    })
+    const files = e.target.files
+    if (!files?.length) return
+    const tasks = []
+    for (const file of files) {
+      tasks.push(compressImage(file).then(dataUrl => ({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        dataUrl,
+        caption: '',
+        createdAt: new Date().toISOString(),
+      })))
+    }
+    const results = await Promise.all(tasks)
+    results.forEach(photo => onAddPhoto(photo))
     e.target.value = ''
   }
 
@@ -74,7 +78,7 @@ export default function PhotoGrid({ photos = [], onAddPhoto, onRemovePhoto }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >+</button>
-        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
+        <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} style={{ display: 'none' }} />
       </div>
       {photos.length > 0 && (
         <p style={{ color: '#666', fontSize: '11px' }}>共 {photos.length} 张照片</p>

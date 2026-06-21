@@ -5,17 +5,23 @@ export function useCityRecords() {
   const [records, setRecords] = useState({})
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    db.cityRecords.toArray().then(allRecords => {
+  const loadRecords = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const allRecords = await db.cityRecords.toArray()
       const map = {}
       allRecords.forEach(r => { map[r.cityId] = r })
       setRecords(map)
-    }).catch(err => {
+    } catch (err) {
       console.warn('IndexedDB load error:', err)
-    }).finally(() => {
+    } finally {
       setIsLoading(false)
-    })
+    }
   }, [])
+
+  useEffect(() => {
+    loadRecords()
+  }, [loadRecords])
 
   const getRecord = useCallback((cityId) => {
     return records[cityId] || null
@@ -36,5 +42,58 @@ export function useCityRecords() {
     return record
   }, [])
 
-  return { records, getRecord, saveRecord, isLoading }
+  /** Add a new independent trip (photos + date + description) to a city. */
+  const addTrip = useCallback(async (cityId, tripData) => {
+    const now = new Date().toISOString()
+    const existing = await db.cityRecords.get(cityId) || { cityId }
+    const trip = {
+      id: crypto.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      visitDate: tripData.visitDate || '',
+      photos: tripData.photos || [],
+      description: tripData.description || '',
+      createdAt: now,
+    }
+    const trips = existing.trips || []
+    const updated = {
+      ...existing,
+      cityId,
+      visited: true,
+      trips: [...trips, trip],
+      updatedAt: now,
+      createdAt: existing?.createdAt || now,
+    }
+    await db.cityRecords.put(updated)
+    setRecords(prev => ({ ...prev, [cityId]: updated }))
+    return updated
+  }, [])
+
+  /** Update a specific trip by trip id. */
+  const updateTrip = useCallback(async (cityId, tripId, data) => {
+    const existing = await db.cityRecords.get(cityId)
+    if (!existing) return
+    const trips = (existing.trips || []).map(t =>
+      t.id === tripId ? { ...t, ...data } : t
+    )
+    const updated = {
+      ...existing,
+      trips,
+      updatedAt: new Date().toISOString(),
+    }
+    await db.cityRecords.put(updated)
+    setRecords(prev => ({ ...prev, [cityId]: updated }))
+    return updated
+  }, [])
+
+  /** Remove a trip by trip id. */
+  const removeTrip = useCallback(async (cityId, tripId) => {
+    const existing = await db.cityRecords.get(cityId)
+    if (!existing) return
+    const trips = (existing.trips || []).filter(t => t.id !== tripId)
+    const updated = { ...existing, trips, updatedAt: new Date().toISOString() }
+    await db.cityRecords.put(updated)
+    setRecords(prev => ({ ...prev, [cityId]: updated }))
+    return updated
+  }, [])
+
+  return { records, getRecord, saveRecord, loadRecords, addTrip, updateTrip, removeTrip, isLoading }
 }
