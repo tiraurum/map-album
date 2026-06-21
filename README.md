@@ -1,14 +1,15 @@
 # 🌏 我的旅行地图 Map Album
 
-一个基于中国行政区划地图的旅行记录应用。点击地图上的省份、城市或区县，标记你去过的地方，记录旅途中的照片和故事。
+一个基于中国行政区划地图的旅行记录应用。点击地图上的省份、城市或区县，标记你去过的地方，记录旅途中的照片和故事。所有地图数据本地加载，无需联网。
 
 ## 功能特色
 
-- 🗺️ **三级行政区划地图** — 省、市、县边界精确展示，支持手动切换 + 自动推荐图层
+- 🗺️ **三级行政区划地图** — 省、市、县边界精确展示，支持手动切换 + 自动推荐图层，完全离线
 - 🔴🔵🟢 **三态标记** — 点击任意区域可标记为"已去过"、"想去"或"计划中"，状态可升级
 - 📸 **多趟旅行记录** — 每个去过的地方可记录多次独立到访，各自带照片和文字描述
 - 🗺️ **旅行路线** — 自动按日期生成旅行路线，在地图上绘制连线
-- 🎨 **主题与字体** — 4 套配色主题（默认暗色/明亮系/暖色系/白色极简）+ 3 种字体
+- 🏆 **成就系统** — 每个城市对应一句古诗，打卡解锁成就，Steam 风格弹窗展示
+- 🎨 **主题与字体** — 5 套配色主题（默认暗色/明亮系/暖色系/白色极简/天蓝）+ 3 种字体
 - 📊 **统计数据** — 自动统计已点亮城市数、覆盖面积（km²）、旅行历时
 - 📋 **侧边栏筛选** — 按年份筛选、按日期或状态排序
 - 💾 **数据备份** — 一键导出/导入 JSON 备份文件，换设备不丢数据
@@ -18,7 +19,7 @@
 
 ### 方式一：解压即用（推荐给普通用户）
 
-1. 从 [Releases](https://github.com/tiraurum/map-album/releases) 下载最新版 `map-album-1.1.0.zip`
+1. 从 [Releases](https://github.com/tiraurum/map-album/releases) 下载最新版 `map-album-1.1.2.zip`
 2. 解压到任意文件夹
 3. **Windows**：双击 `启动.bat`
 4. **macOS / Linux**：双击 `启动.sh`
@@ -51,15 +52,16 @@ npm run preview
 |------|------|
 | [Vite](https://vitejs.dev/) | 构建工具 |
 | [React](https://react.dev/) | UI 框架 |
-| [Leaflet](https://leafletjs.com/) + [react-leaflet](https://react-leaflet.js.org/) | 地图引擎 |
+| [Leaflet](https://leafletjs.com/) + [react-leaflet](https://react-leaflet.js.org/) | 地图引擎（离线 GeoJSON） |
 | [Dexie.js](https://dexie.org/) | 浏览器本地数据库（IndexedDB，schema v2） |
 | 中国行政区划 GeoJSON | 省/市/县三级边界数据 |
+| 古诗成就系统 | 26 个城市文化成就，绑定古诗词 |
 
 ## 数据来源
 
 - 行政区划边界数据来源于[天地图](https://www.tianditu.gov.cn/)（国家地理信息公共服务平台）
 - 城市坐标数据基于公开行政区划编码整理
-- 地图瓦片由 [OpenStreetMap](https://www.openstreetmap.org/) 提供（需要联网加载）
+- 地图边界数据来源于[天地图](https://www.tianditu.gov.cn/)（国家地理信息公共服务平台），离线加载
 
 ## 项目结构
 
@@ -80,7 +82,7 @@ map-album/
 ├── 启动.sh                # macOS / Linux 一键启动
 ├── server.ps1             # PowerShell HTTP 服务器
 ├── 启动测试服务器.bat      # 开发用（需 Node.js）
-└── map-album-1.1.0.zip    # 可分发安装包
+└── map-album-1.1.2.zip    # 可分发安装包
 ```
 
 ## 许可证
