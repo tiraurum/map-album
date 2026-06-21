@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useMemo } from 'react'
 import cities from './data/cities.json'
 import { useCityRecords } from './hooks/useCityRecords'
 import { useRoutes } from './hooks/useRoutes'
+import { useAchievements } from './hooks/useAchievements'
 import { ThemeProvider, useTheme } from './context/ThemeContext'
 import MapView from './components/MapView'
 import CityPopup from './components/CityPopup'
@@ -10,6 +11,8 @@ import DetailPanel from './components/DetailPanel'
 import RouteLines from './components/RouteLines'
 import StatisticsPanel from './components/StatisticsPanel'
 import ThemeSwitcher from './components/ThemeSwitcher'
+import AchievementToast from './components/AchievementToast'
+import AchievementPanel from './components/AchievementPanel'
 
 const citiesMap = Object.fromEntries(cities.map(c => [c.id, c]))
 
@@ -25,10 +28,12 @@ function AppContent() {
   const { theme, themeId } = useTheme()
   const { records, getRecord, saveRecord, loadRecords, addTrip, updateTrip, removeTrip, isLoading } = useCityRecords()
   const { routes, createRoute, deleteRoute } = useRoutes()
+  const { unlocked, locked, toastQueue, dismissToast, unlockedCount, totalCount } = useAchievements(records)
   const [selectedRegion, setSelectedRegion] = useState(null)
   const [detailRegionId, setDetailRegionId] = useState(null)
   const [filterYear, setFilterYear] = useState('')
   const [sortOrder, setSortOrder] = useState('default')
+  const [showAchievements, setShowAchievements] = useState(false)
   const regionMeta = useRef({}) // code -> { name, level }
 
   // All cities with any status (visited / wanna-go / planned)
@@ -59,6 +64,11 @@ function AppContent() {
   const handleUpdateStatus = useCallback(async (regionId, newStatus) => {
     await saveRecord(regionId, { status: newStatus, visited: true })
     // Keep popup open so user sees the change
+  }, [saveRecord])
+
+  const handleUnmarkCity = useCallback(async (regionId) => {
+    await saveRecord(regionId, { visited: false, status: null })
+    setSelectedRegion(null)
   }, [saveRecord])
 
   const handleOpenDetail = useCallback((regionId) => {
@@ -137,6 +147,7 @@ function AppContent() {
                 record={getRecord(popupCity.id)}
                 onMarkCity={handleMarkCity}
                 onUpdateStatus={handleUpdateStatus}
+                onUnmarkCity={handleUnmarkCity}
                 onOpenDetail={handleOpenDetail}
                 onClose={() => setSelectedRegion(null)}
               />
@@ -144,14 +155,52 @@ function AppContent() {
             <RouteLines routes={routes} citiesMap={citiesMap} />
           </MapView>
 
-          {/* Theme switcher button — bottom-left */}
+          {/* Bottom-left button group */}
           <div style={{
             position: 'absolute',
             bottom: '12px',
             left: '12px',
             zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
           }}>
+            <button
+              onClick={() => setShowAchievements(!showAchievements)}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                background: theme.surface,
+                border: `1px solid ${theme.border}`,
+                color: theme.textSecondary,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px',
+                boxShadow: theme.shadow || 'none',
+                transition: 'all 0.2s',
+                position: 'relative',
+              }}
+              title={`成就 (${unlockedCount}/${totalCount})`}
+            >
+              🏆
+            </button>
+
+            {showAchievements && (
+              <AchievementPanel
+                unlocked={unlocked}
+                locked={locked}
+                unlockedCount={unlockedCount}
+                totalCount={totalCount}
+                onClose={() => setShowAchievements(false)}
+              />
+            )}
+
             <ThemeSwitcher />
+
+            <AchievementToast queue={toastQueue} onDismiss={dismissToast} />
           </div>
         </div>
 

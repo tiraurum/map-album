@@ -17,7 +17,7 @@ const UPGRADE_PATHS = {
   ],
 }
 
-export default function CityPopup({ city, record, onMarkCity, onUpdateStatus, onOpenDetail, onClose }) {
+export default function CityPopup({ city, record, onMarkCity, onUpdateStatus, onUnmarkCity, onOpenDetail, onClose }) {
   const status = record?.status || (record?.visited ? 'visited' : '')
   const cfg = STATUS_CONFIG[status]
 
