@@ -16,6 +16,7 @@ export default function RoutePlayback({ route, citiesMap, onClose }) {
   const [playing, setPlaying] = useState(true)
   const [speed, setSpeed] = useState(600)  // km/h
   const [progress, setProgress] = useState(0)
+  const progressRef = useRef(0) // 实时进度，切换速度时不丢失
 
   // Build coordinates from route.cityIds (memoized — stable ref during playback)
   const coordinates = useMemo(() => {
@@ -126,26 +127,42 @@ export default function RoutePlayback({ route, citiesMap, onClose }) {
     }
     passedLineRef.current.setLatLngs(passedCoords)
 
-    // Pan map to follow marker
-    map.panTo(p, { animate: true })
+    // Pan map to follow marker — animate:false prevents 60fps animation queue conflict
+    map.panTo(p, { animate: false })
   }, [getPositionAt, map, coordinates])
 
-  // Animation loop
+  // 记录上一帧的时间
+  const lastFrameTimeRef = useRef(0)
+
+  // Animation loop (基于增量时间，切换速度不会重置)
   const startAnimation = useCallback(() => {
-    const startTime = performance.now()
+    lastFrameTimeRef.current = performance.now()
     const speedKmPerMs = speed / (1000 * 60 * 60) // km/h → km/ms
     const totalDist = totalDistanceRef.current
+    let lastUiUpdate = 0
 
     const step = (now) => {
-      const elapsed = now - startTime
-      const dist = elapsed * speedKmPerMs
-      const frac = Math.min(dist / totalDist, 1)
+      const delta = now - lastFrameTimeRef.current
+      lastFrameTimeRef.current = now
+
+      // 计算这一帧增加的进度比例
+      const incFrac = (delta * speedKmPerMs) / totalDist
+      progressRef.current = Math.min(progressRef.current + incFrac, 1)
+      const frac = progressRef.current
+
+      // 更新地图标记
       updateProgress(frac)
-      setProgress(frac)
+
+      // 节流更新 UI
+      if (now - lastUiUpdate > 100) {
+        setProgress(frac)
+        lastUiUpdate = now
+      }
 
       if (frac < 1) {
         animRef.current = requestAnimationFrame(step)
       } else {
+        setProgress(1)
         setPlaying(false)
       }
     }
@@ -155,22 +172,21 @@ export default function RoutePlayback({ route, citiesMap, onClose }) {
 
   const handlePlayPause = useCallback(() => {
     if (playing) {
-      // Pause
       if (animRef.current && typeof animRef.current === 'number') {
         cancelAnimationFrame(animRef.current)
       }
       setPlaying(false)
     } else {
-      // Play / Replay
-      if (progress >= 1) {
-        updateProgress(0)
+      // 如果已经播放完毕，重置进度
+      if (progressRef.current >= 1) {
+        progressRef.current = 0
         setProgress(0)
       }
       setPlaying(true)
     }
-  }, [playing, progress, updateProgress])
+  }, [playing])
 
-  // Start/stop animation when `playing` changes
+  // Start/stop animation when `playing` or `speed` changes
   useEffect(() => {
     if (playing) {
       startAnimation()
@@ -184,6 +200,7 @@ export default function RoutePlayback({ route, citiesMap, onClose }) {
 
   const handleProgressChange = useCallback((e) => {
     const v = parseFloat(e.target.value)
+    progressRef.current = v // 同步更新 Ref
     updateProgress(v)
     setProgress(v)
   }, [updateProgress])
@@ -199,7 +216,7 @@ export default function RoutePlayback({ route, citiesMap, onClose }) {
     borderRadius: '4px',
     padding: '4px 8px',
   }
-  const btnActive = { ...btnBase, background: theme.primary, color: '#fff', borderColor: theme.primary }
+  const btnActive = { ...btnBase, background: theme.primary, color: '#fff', border: `1px solid ${theme.primary}` }
 
   return (
     <div style={{
@@ -220,7 +237,7 @@ export default function RoutePlayback({ route, citiesMap, onClose }) {
     }}>
       <button onClick={handlePlayPause} style={{
         ...btnBase,
-        background: theme.primary, color: '#fff', borderColor: theme.primary,
+        background: theme.primary, color: '#fff', border: `1px solid ${theme.primary}`,
         fontSize: '14px', fontWeight: 'bold', padding: '4px 14px',
       }}>
         {playing ? '⏸' : progress >= 1 ? '↺' : '▶'}
