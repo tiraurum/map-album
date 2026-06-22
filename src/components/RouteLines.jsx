@@ -1,14 +1,15 @@
 import { Polyline } from 'react-leaflet'
 
-export default function RouteLines({ routes, citiesMap, playingRouteId }) {
-  if (!routes?.length) return null
+export default function RouteLines({ routes, citiesMap, playingRouteId, show }) {
+  if (!show || !routes?.length) return null
+
+  const displayRoutes = playingRouteId
+    ? routes.filter(r => r.id === playingRouteId)
+    : routes
 
   return (
     <>
-      {routes.map(route => {
-        // Hide the static line while this route is being played
-        if (playingRouteId === route.id) return null
-
+      {displayRoutes.map(route => {
         const positions = route.cityIds
           .map(id => citiesMap[id])
           .filter(Boolean)

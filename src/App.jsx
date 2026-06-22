@@ -37,6 +37,7 @@ function AppContent() {
   const [sortOrder, setSortOrder] = useState('default')
   const [showAchievements, setShowAchievements] = useState(false)
   const [playingRoute, setPlayingRoute] = useState(null)
+  const [editingRouteIds, setEditingRouteIds] = useState(null)
   const regionMeta = useRef({}) // code -> { name, level }
 
   // All cities with any status (visited / wanna-go / planned)
@@ -86,6 +87,32 @@ function AppContent() {
 
   const handleCloseDetail = useCallback(() => {
     setDetailRegionId(null)
+  }, [])
+
+  // ── Route editing handlers ──
+  const handleRouteAddCity = useCallback((cityId) => {
+    setEditingRouteIds(prev => {
+      if (!prev) return [cityId]
+      if (prev.includes(cityId)) return prev
+      return [...prev, cityId]
+    })
+  }, [])
+
+  const handleRouteRemoveCity = useCallback((cityId) => {
+    setEditingRouteIds(prev => {
+      if (!prev) return prev
+      return prev.filter(id => id !== cityId)
+    })
+  }, [])
+
+  const handleRouteSave = useCallback(async (name) => {
+    if (!editingRouteIds || editingRouteIds.length < 2) return
+    await createRoute(name, editingRouteIds)
+    setEditingRouteIds(null)
+  }, [editingRouteIds, createRoute])
+
+  const handleRouteCancel = useCallback(() => {
+    setEditingRouteIds(null)
   }, [])
 
   // Handle a photo from PhotoDropBox: add to city record + auto-mark city as visited
@@ -183,7 +210,7 @@ function AppContent() {
                 onClose={() => setSelectedRegion(null)}
               />
             )}
-            <RouteLines routes={routes} citiesMap={citiesMap} playingRouteId={playingRoute?.id} />
+            <RouteLines routes={routes} citiesMap={citiesMap} playingRouteId={playingRoute?.id} show={!!playingRoute} />
             {playingRoute && (
               <RoutePlayback route={playingRoute} citiesMap={citiesMap} onClose={() => setPlayingRoute(null)} />
             )}
@@ -266,6 +293,12 @@ function AppContent() {
           onCreateRoute={createRoute}
           onDeleteRoute={deleteRoute}
           onPlayRoute={setPlayingRoute}
+          allCities={cities}
+          editingRouteIds={editingRouteIds}
+          onRouteAddCity={handleRouteAddCity}
+          onRouteRemoveCity={handleRouteRemoveCity}
+          onRouteSave={handleRouteSave}
+          onRouteCancel={handleRouteCancel}
         />
       </div>
 

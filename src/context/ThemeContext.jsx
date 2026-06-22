@@ -6,6 +6,7 @@ const THEMES = {
   default: {
     id: 'default',
     name: '默认暗色',
+    mapBg: '#1a1a2e',
     bg: '#1a1a2e',
     surface: '#16213e',
     surfaceAlt: '#0f1a2f',
@@ -37,6 +38,7 @@ const THEMES = {
   bright: {
     id: 'bright',
     name: '明亮系',
+    mapBg: '#e8e8e8',
     bg: '#01847F',
     surface: '#019c96',
     surfaceAlt: '#017872',
@@ -66,6 +68,7 @@ const THEMES = {
   warm: {
     id: 'warm',
     name: '暖色系',
+    mapBg: '#f5efe6',
     bg: '#faf6f0',
     surface: '#fffaf3',
     surfaceAlt: '#fdf6ec',
@@ -97,6 +100,7 @@ const THEMES = {
   white: {
     id: 'white',
     name: '白色极简',
+    mapBg: '#f0f0f0',
     bg: '#ffffff',
     surface: '#ffffff',
     surfaceAlt: '#fafafa',
@@ -165,13 +169,13 @@ const FONTS = {
   },
   kai: {
     id: 'kai',
-    name: '楷体',
-    family: "'KaiTi', 'STKaiti', '楷体', 'Noto Serif SC', serif",
+    name: '思源宋体 + Lora',
+    family: "'Noto Serif SC', 'Source Han Serif SC', '思源宋体', 'Lora', Georgia, 'Times New Roman', serif",
   },
   cascadia: {
     id: 'cascadia',
     name: 'Cascadia Mono',
-    family: "'Cascadia Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace",
+    family: "'Cascadia Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei UI', sans-serif",
   },
 }
 
@@ -205,6 +209,7 @@ export function ThemeProvider({ children }) {
     el.style.setProperty('--popup-border', t.border)
     el.style.setProperty('--popup-muted', t.textMuted)
     el.style.setProperty('--popup-shadow', t.shadow || 'none')
+    el.style.setProperty('--map-bg', t.mapBg)
     el.style.setProperty('--surface', t.surface)
     el.style.setProperty('--border', t.border)
     el.style.setProperty('--primary', t.primary)
